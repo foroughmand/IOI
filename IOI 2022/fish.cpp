@@ -126,8 +126,10 @@ int64 max_1(const IntervalTree& tree_i, int x) {
 	for (int y = x; y <= N; y++) {
 		// err << "max_1(" << x << ") " << (dp_iminus1_down.find(y) != dp_iminus1_down.end() ? dp_iminus1_down[y] : -INF) << " " << (dp_iminus1_up.find(y) != dp_iminus1_up.end() ? dp_iminus1_up[y] : -INF) << " " << fish(tree_i, x, y) << endl;
 		res = max(res, max(
-			dp_iminus1_down.find(y) != dp_iminus1_down.end() ? dp_iminus1_down[y] : -INF, 
-			dp_iminus1_up.find(y) != dp_iminus1_up.end() ? dp_iminus1_up[y] : -INF) + fish(tree_i, x, y));
+			dp_iminus1_down.find(y) != dp_iminus1_down.end() ? 
+				dp_iminus1_down[y] : -INF, 
+			dp_iminus1_up.find(y) != dp_iminus1_up.end() ? 
+				dp_iminus1_up[y] : -INF) + fish(tree_i, x, y));
 	}
 	return res;
 }
@@ -139,7 +141,8 @@ int64 max_2(const IntervalTree& tree_iminus1, int x) {
 	for (int y = 0; y <= x; y++) {
 		// err << "max_2(" << x << ") " << (dp_iminus1_up.find(y) != dp_iminus1_up.end() ? dp_iminus1_up[y] : -INF) << " " << fish(tree_iminus1, y, x) << endl;
 		res = max(res, 
-			(dp_iminus1_up.find(y) != dp_iminus1_up.end() ? dp_iminus1_up[y] : -INF) + fish(tree_iminus1, y, x));
+			(dp_iminus1_up.find(y) != dp_iminus1_up.end() ? 
+				dp_iminus1_up[y] : -INF) + fish(tree_iminus1, y, x));
 	}
 	return res;
 }
@@ -154,12 +157,16 @@ int64 max_weights(int N, int M, vector<int> X, vector<int> Y, vector<int> W) {
 	}
 
 	for (size_t i=0; i<(size_t)N+1; i++) {
-		sort(column_fish_index[i].begin(), column_fish_index[i].end(), [&](int f1, int f2) { return Y[f1] < Y[f2]; });
+		sort(column_fish_index[i].begin(), 
+			column_fish_index[i].end(), 
+				[&](int f1, int f2) { return Y[f1] < Y[f2]; });
 		// err << "column_fish_index[" << i << "]=" << column_fish_index[i] << endl;
 	}
 
 	IntervalTree tree_iminus1;
-	tree_iminus1.build(transform_container(column_fish_index[0], [&Y, &W](int f) { return make_pair(Y[f], W[f]); }));
+	tree_iminus1.build(transform_container(
+		column_fish_index[0], 
+		[&Y, &W](int f) { return make_pair(Y[f], W[f]); }));
 
 	dp_iminus1_down = dp_iminus1_up = map<int, int64>();
 	dp_iminus1_down[0] = dp_iminus1_up[0] = 0;
@@ -180,18 +187,21 @@ int64 max_weights(int N, int M, vector<int> X, vector<int> Y, vector<int> W) {
 		}
 		sort(important_rows_i.begin(), important_rows_i.end());
 		// err << "important_rows_i: " << important_rows_i << endl;
-		important_rows_i.resize(unique(important_rows_i.begin(), important_rows_i.end()) - important_rows_i.begin());
+		important_rows_i.resize(unique(important_rows_i.begin(), 
+			important_rows_i.end()) - important_rows_i.begin());
 		// err << "important_rows_i: " << important_rows_i << endl;
 		
 		//fill fish interval tree
 		IntervalTree tree_i;
-		tree_i.build(transform_container(column_fish_index[i], [&Y, &W](int f) { return make_pair(Y[f], W[f]); }));
+		tree_i.build(transform_container(column_fish_index[i], 
+			[&Y, &W](int f) { return make_pair(Y[f], W[f]); }));
 
 		// max_{N>=y >= x} DP[i-1,y,down] + fish(i,[x-y)), DP[i-1,y,up] + fish(i,[x-y))
 		vector<pair<int,int64>> max_1_discrete;
 		max_1_discrete.reserve(dp_iminus1_up.size() + 1);
 		max_1_discrete.push_back(make_pair(N+1, -INF));
-		for (map<int, int64>::reverse_iterator x = dp_iminus1_up.rbegin(); x != dp_iminus1_up.rend(); x++) {
+		for (map<int, int64>::reverse_iterator x = dp_iminus1_up.rbegin(); 
+			x != dp_iminus1_up.rend(); x++) {
 			auto prev = max_1_discrete.back();
 			max_1_discrete.push_back(make_pair(x->first, 
 				max(fish(tree_i, x->first, prev.first) + prev.second, 
@@ -232,22 +242,30 @@ int64 max_weights(int N, int M, vector<int> X, vector<int> Y, vector<int> W) {
 		vector<pair<int,int64>> dp_i_down, dp_i_up;
 		for (auto x : important_rows_i) {
 			// dp_i_down[x] = max_1(tree_i, x);
-			auto max_1_discrete_it = lower_bound(max_1_discrete.begin(), max_1_discrete.end(), x, [](const pair<int, int64>& max_1_disc, int r) { return max_1_disc.first < r; });
+			auto max_1_discrete_it = lower_bound(max_1_discrete.begin(), 
+				max_1_discrete.end(), x, 
+				[](const pair<int, int64>& max_1_disc, int r) { return max_1_disc.first < r; });
 			// err << "max_1_discrete_it: " << *max_1_discrete_it << endl;
 			// dp_i_down[x] = 
 			dp_i_down.push_back(make_pair(x,
-			max_1_discrete_it == max_1_discrete.end() ? -INF : max_1_discrete_it->second + fish(tree_i, x, max_1_discrete_it->first)
+				max_1_discrete_it == max_1_discrete.end() ? -INF : 
+					max_1_discrete_it->second + fish(tree_i, x, max_1_discrete_it->first)
 			));
 			
 			// dp_i_up[x] = max(max_2(tree_iminus1, x), dp_iminus1_down[0]);
-			auto max_2_discrete_it = lower_bound(max_2_discrete.rbegin(), max_2_discrete.rend(), x, [](const pair<int, int64>& max_2_disc, int r) { return !(max_2_disc.first <= r); } );
+			auto max_2_discrete_it = lower_bound(max_2_discrete.rbegin(), 
+				max_2_discrete.rend(), x, 
+				[](const pair<int, int64>& max_2_disc, int r) 
+					{ return !(max_2_disc.first <= r); } );
 			// err << "max_2_discrete_it: " << *max_2_discrete_it << " p=" << (max_2_discrete_it == max_2_discrete.rbegin() ? make_pair<int,int64>(-1,-1) : *prev(max_2_discrete_it)) << endl;
 			assert(max_2_discrete_it->first <= x);
 			assert(max_2_discrete_it == max_2_discrete.rbegin() || prev(max_2_discrete_it)->first > x);
 			// dp_i_up[x] = 
 			dp_i_up.push_back(make_pair(
 				x, 
-				max(max_2_discrete_it->second + fish(tree_iminus1, max_2_discrete_it->first, x), dp_iminus1_down[0])
+				max(max_2_discrete_it->second + 
+						fish(tree_iminus1, max_2_discrete_it->first, x), 
+					dp_iminus1_down[0])
 			));
 			// err << "dp[" << i << "," << x << "]=" << dp_i_down[x] << " ^:" << dp_i_up[x] << endl;
 		}
